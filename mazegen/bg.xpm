@@ -1,0 +1,27 @@
+/* XPM */
+static char *meu_background[] = {
+/* largura altura num_cores caracteres_por_pixel */
+"16 16 4 1",
+/* Definição das Cores */
+"  c #10101a", /* Cor principal (fundo quase preto) */
+". c #1a1a2e", /* Tom levemente mais claro para profundidade */
+"+ c #16213e", /* Azul marinho escuro para a grade */
+"# c #0f3460", /* Destaque sutil para as quinas */
+/* O Desenho do Pixel Art */
+"################",
+"#              +",
+"#  ..........  +",
+"#  .        .  +",
+"#  .        .  +",
+"#  .        .  +",
+"#  .        .  +",
+"#  .        .  +",
+"#  .        .  +",
+"#  .        .  +",
+"#  .        .  +",
+"#  .        .  +",
+"#  ..........  +",
+"#              +",
+"++++++++++++++++",
+"++++++++++++++++"
+};

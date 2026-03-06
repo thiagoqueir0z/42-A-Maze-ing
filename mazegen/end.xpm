@@ -1,0 +1,27 @@
+/* XPM */
+static char *path_end[] = {
+/* largura altura num_cores caracteres_por_pixel */
+"16 16 4 1",
+/* Definição das Cores */
+"  c None",    /* Transparente */
+". c #FF0000", /* Vermelho Brilhante */
+"+ c #8B0000", /* Vermelho Escuro (Bordas) */
+"# c #FFFFFF", /* Branco (Brilho no centro) */
+/* Desenho do Ícone */
+"                ",
+"   .........    ",
+"   .........    ",
+"   ...          ",
+"   ...          ",
+"   ...          ",
+"   .........    ",
+"   .........    ",
+"   ...          ",
+"   ...          ",
+"   ...          ",
+"   .........    ",
+"   .........    ",
+"                ",
+"                ",
+"                "
+};
