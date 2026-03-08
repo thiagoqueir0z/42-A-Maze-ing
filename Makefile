@@ -1,6 +1,6 @@
 PACKAGE  = a_maze_ing
 NAME     = a_maze_ing.py
-SRC      = a_maze_ing.py a_maze_ing
+SRC      = a_maze_ing.py mazegen/
 PYTHON   = python3
 PIP      = pip
 CONFIG = config.txt
@@ -9,7 +9,7 @@ CONFIG = config.txt
 all: run
 
 install:
-	$(PYTHON) -m $(PIP) install --user flake8 mypy
+	$(PYTHON) -m $(PIP) install --user flake8 mypy mlx-python
 
 run:
 	$(PYTHON) $(NAME) $(CONFIG)
