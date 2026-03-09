@@ -6,28 +6,44 @@ from mazegen.maze_data import MazeData
 
 
 class MazeVisualizer:
-    def __init__(self, maze, tile_size=32, config_path=None):
-        self.amaze = maze
-        self.h = len(maze)
-        self.w = len(maze[0])
-        self.gen_width = (self.w - 1) // 2 if self.w % 2 == 1 else self.w
-        self.gen_height = (self.h - 1) // 2 if self.h % 2 == 1 else self.h
+    def __init__(self, maze, settings):
+        self.tile_size = int(settings.get('TILE_SIZE', 32))
 
-        if config_path:
-            try:
-                config = parse_config(config_path)
-                self.tile_size = int(config.get('TILE_SIZE', tile_size))
-            except Exception:
-                self.tile_size = tile_size
+        if isinstance(maze, MazeGenerator):
+            self.seed = settings.get('SEED')
+            self.perfect = settings.get('PERFECT', False)
+            self.entry = settings.get('ENTRY', (0, 0))
+            self.exit_p = settings.get(
+                'EXIT',
+                (maze.width - 1, maze.height - 1)
+            )
+            self.gen_width = maze.width
+            self.gen_height = maze.height
+            maze_data = MazeData(maze, self.entry, self.exit_p)
+            self.amaze = maze_data.matrix
+            self.path_cells = maze_data.path
         else:
-            self.tile_size = tile_size
+            self.seed = settings.get('SEED')
+            self.perfect = settings.get('PERFECT', False)
+            self.amaze = maze
+            self.h = len(maze)
+            self.w = len(maze[0])
+            self.gen_width = (self.w - 1) // 2 if self.w % 2 == 1 else self.w
+            self.gen_height = (self.h - 1) // 2 if self.h % 2 == 1 else self.h
+            self.entry = settings.get('ENTRY', (0, 0))
+            self.exit_p = settings.get(
+                'EXIT',
+                (self.gen_width - 1, self.gen_height - 1)
+            )
+            self.path_cells = None
+
+        self.h = len(self.amaze)
+        self.w = len(self.amaze[0])
 
         self.show_path = True
         self.wall_index = 0
-        self.path_reveal_index = 0
-        self.reveal_speed = 3
-        self.frame_counter = 0
-        self.path_cells = self._build_path_list()
+        if self.path_cells is None:
+            self.path_cells = self._build_path_list()
 
         self.gui = mlx.Mlx()
         self.m_ptr = self.gui.mlx_init()
@@ -61,7 +77,13 @@ class MazeVisualizer:
 
 
     def _get_img(self, filename):
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        path = os.path.join(base_dir, filename)
+        if not os.path.exists(path):
+            project_root = os.path.dirname(base_dir)
+            alt_path = os.path.join(project_root, 'assets', filename)
+            if os.path.exists(alt_path):
+                path = alt_path
         img = self.gui.mlx_xpm_file_to_image(self.m_ptr, path)
 
         img_ptr = img
@@ -103,11 +125,6 @@ class MazeVisualizer:
 
 
     def draw_amaze(self, param=None):
-        self.frame_counter += 1
-        if self.frame_counter % self.reveal_speed == 0:
-            if self.path_reveal_index < len(self.path_cells):
-                self.path_reveal_index += 1
-
         for y in range(self.h):
             for x in range(self.w):
                 x_px = x * self.tile_size
@@ -122,15 +139,8 @@ class MazeVisualizer:
                         self._draw_centered(sprite_conectado, x_px, y_px)
                     else:
                         self._draw_centered('wall', x_px, y_px)
-                elif value == 'S':
-                    self._draw_centered('start', x_px, y_px)
-                elif value == 'E':
-                    self._draw_centered('end', x_px, y_px)
                 elif value == 'P' and self.show_path:
-                    # Só desenha se já foi revelado
-                    cell_index = self._get_cell_reveal_order(x, y)
-                    if cell_index < self.path_reveal_index:
-                        self._draw_centered('path', x_px, y_px)
+                    self._draw_centered('path', x_px, y_px)
         return 0 
 
 
@@ -156,14 +166,6 @@ class MazeVisualizer:
         # 4. Caso isolado (uma parede solta)
         return 'wall' # Um ponto ou cruz pequena padrão
 
-    def _get_cell_reveal_order(self, x, y):
-        """Retorna índice de revelação da célula (ou infinito se não for caminho)"""
-        try:
-            return self.path_cells.index((x, y))
-        except ValueError:
-            return float('inf')
-
-
     def close_app(self):
         try:
             self.gui.mlx_loop_exit(self.m_ptr)
@@ -185,9 +187,6 @@ class MazeVisualizer:
             print(f"Wall style: {self.wall_index + 1}/2")
         elif keycode == 32: # espaco
             self.regenerate_maze()
-        elif keycode == 114:  # 'r' = reset animação
-            self.path_reveal_index = 0
-            self.frame_counter = 0
         return 0
 
 
@@ -196,9 +195,7 @@ class MazeVisualizer:
         gen.generate(self.entry, self.exit_p, self.perfect)
         maze_data = MazeData(gen, self.entry, self.exit_p)
         self.amaze = maze_data.matrix
-        self.path_cells = self._build_path_list()
-        self.path_reveal_index = 0
-        self.frame_counter = 0
+        self.path_cells = maze_data.path
 
 
     def handle_close(self, param):

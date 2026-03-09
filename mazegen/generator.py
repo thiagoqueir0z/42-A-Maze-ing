@@ -46,7 +46,7 @@ class MazeGenerator:
     def _draw_42(self, visited: set[Tuple[int, int]]) -> None:
         """Draw the number 42 by blocking cells (mandatory requirement)."""
         self.pattern_42 = set()
-        if self.width > 15 and self.height > 15:
+        if self.width >= 9 and self.height >= 9:
             offset_x = self.width // 2 - 2
             offset_y = self.height // 2 - 2
             pattern: List[Tuple[int, int]] = [
