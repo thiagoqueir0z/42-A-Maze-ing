@@ -18,10 +18,6 @@ def main() -> None:
     config_path = sys.argv[1]
 
     try:
-
-        # 1. Parse + Validação com tratamento de erros (Chapter IV.2 e IV.3)
-        raw_settings = parse_config(config_path)
-        settings = validate_config(raw_settings)
         # 1. Parse com tratamento de erros (Chapter IV.2 e IV.3)
         raw_settings = parse_config(config_path)
         settings = validate_config(raw_settings)
