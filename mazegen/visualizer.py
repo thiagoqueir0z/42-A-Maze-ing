@@ -3,81 +3,24 @@ import sys
 import os
 from mazegen.parser import parse_config
 from mazegen.generator import MazeGenerator
-import random
-
-
-def converter_para_vizu(generator, entry=None, exit_p=None):
-    """Converte a grid bitwise (N,E,S,W) para matriz visual com paredes e corredores."""
-    if entry is None:
-        entry = (0, 0)
-    if exit_p is None:
-        exit_p = (generator.width - 1, generator.height - 1)
-
-    viz_h = generator.height * 2 + 1
-    viz_w = generator.width * 2 + 1
-    grade_vizu = [['W' for _ in range(viz_w)] for _ in range(viz_h)]
-
-    for y in range(generator.height):
-        for x in range(generator.width):
-            cell = generator.grid[y][x]
-            vx = x * 2 + 1
-            vy = y * 2 + 1
-
-            grade_vizu[vy][vx] = '0'
-            if not (cell & 1):
-                grade_vizu[vy - 1][vx] = '0'
-            if not (cell & 2):
-                grade_vizu[vy][vx + 1] = '0'
-            if not (cell & 4):
-                grade_vizu[vy + 1][vx] = '0'
-            if not (cell & 8):
-                grade_vizu[vy][vx - 1] = '0'
-
-    px = entry[0] * 2 + 1
-    py = entry[1] * 2 + 1
-    grade_vizu[py][px] = 'P'
-
-    for step in getattr(generator, 'solution', ''):
-        if step == 'N':
-            py -= 1
-            grade_vizu[py][px] = 'P'
-            py -= 1
-            grade_vizu[py][px] = 'P'
-        elif step == 'S':
-            py += 1
-            grade_vizu[py][px] = 'P'
-            py += 1
-            grade_vizu[py][px] = 'P'
-        elif step == 'E':
-            px += 1
-            grade_vizu[py][px] = 'P'
-            px += 1
-            grade_vizu[py][px] = 'P'
-        elif step == 'W':
-            px -= 1
-            grade_vizu[py][px] = 'P'
-            px -= 1
-            grade_vizu[py][px] = 'P'
-
-    start_vx = entry[0] * 2 + 1
-    start_vy = entry[1] * 2 + 1
-    end_vx = exit_p[0] * 2 + 1
-    end_vy = exit_p[1] * 2 + 1
-    grade_vizu[start_vy][start_vx] = 'S'
-    grade_vizu[end_vy][end_vx] = 'E'
-
-    return grade_vizu
 
 
 class MazeVisualizer:
-    def __init__(self, maze, settings, config_path=None):
+    def __init__(self, maze, tile_size=32, config_path=None):
         self.amaze = maze
         self.h = len(maze)
         self.w = len(maze[0])
         self.gen_width = (self.w - 1) // 2 if self.w % 2 == 1 else self.w
         self.gen_height = (self.h - 1) // 2 if self.h % 2 == 1 else self.h
 
-        self.tile_size = settings.get('TILE_SIZE', 32)
+        if config_path:
+            try:
+                config = parse_config(config_path)
+                self.tile_size = int(config.get('TILE_SIZE', tile_size))
+            except Exception:
+                self.tile_size = tile_size
+        else:
+            self.tile_size = tile_size
 
         self.show_path = True
         self.wall_index = 0
@@ -91,8 +34,8 @@ class MazeVisualizer:
         
         self.win = self.gui.mlx_new_window(
             self.m_ptr, 
-            self.w * self.tile_size, 
-            self.h * self.tile_size,
+            int(self.w * self.tile_size), 
+            int(self.h * self.tile_size),
             "A-Maze-ing"
         )
         self.utils = {
@@ -281,20 +224,3 @@ class MazeVisualizer:
         self.gui.mlx_hook(self.win, 33, 0, self.handle_close, None)
         self.gui.mlx_loop_hook(self.m_ptr, self.draw_amaze, None)
         self.gui.mlx_loop(self.m_ptr)
-
-
-if __name__ == "__main__":
-    # Dimensões para o efeito de "circuito denso" que você quer
-    largura, altura = 35, 35
-    entry, exit_p = (0, 0), (largura - 1, altura - 1)
-    
-    # Gera o labirinto inicial usando a sua classe
-    gen = MazeGenerator(largura, altura)
-    gen.generate(entry, exit_p, perfect=False)
-    
-    # Converte já marcando entrada/saída nas posições corretas
-    matriz_inicial = converter_para_vizu(gen, entry, exit_p)
-    
-    # Inicia o visualizador com tile_size 16 para linhas finas
-    app = MazeVisualizer(matriz_inicial, tile_size=16)
-    app.run()
