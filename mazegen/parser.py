@@ -62,12 +62,20 @@ def validate_config(raw_data: dict[str, Any]) -> dict[str, Any]:
             parts = [p.strip() for p in s.split(',')]
             if len(parts) != 2:
                 raise ValueError(f"Invalid coordinate format: {s}")
-            return (int(parts), int(parts[1]))
+            return (int(parts[0]), int(parts[1]))
 
         # Coordinate and filename validation
         valid_config['ENTRY'] = parse_coords(raw_data['ENTRY'])
         valid_config['EXIT'] = parse_coords(raw_data['EXIT'])
         valid_config['OUTPUT_FILE'] = raw_data['OUTPUT_FILE'].strip()
+
+        # TILE_SIZE opcional, padrão 32
+        if 'TILE_SIZE' in raw_data:
+            valid_config['TILE_SIZE'] = int(raw_data['TILE_SIZE'])
+            if valid_config['TILE_SIZE'] <= 0:
+                raise ValueError("TILE_SIZE must be greater than zero.")
+        else:
+            valid_config['TILE_SIZE'] = 32
 
         # Logical constraints validation (Chapter IV.4)
         if valid_config['WIDTH'] <= 0 or valid_config['HEIGHT'] <= 0:

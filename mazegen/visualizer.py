@@ -70,21 +70,14 @@ def converter_para_vizu(generator, entry=None, exit_p=None):
 
 
 class MazeVisualizer:
-    def __init__(self, maze, tile_size=32, config_path=None):
+    def __init__(self, maze, settings, config_path=None):
         self.amaze = maze
         self.h = len(maze)
         self.w = len(maze[0])
         self.gen_width = (self.w - 1) // 2 if self.w % 2 == 1 else self.w
         self.gen_height = (self.h - 1) // 2 if self.h % 2 == 1 else self.h
 
-        if config_path:
-            try:
-                config = parse_config(config_path)
-                self.tile_size = int(config.get('TILE_SIZE', tile_size))
-            except Exception:
-                self.tile_size = tile_size
-        else:
-            self.tile_size = tile_size
+        self.tile_size = settings.get('TILE_SIZE', 32)
 
         self.show_path = True
         self.wall_index = 0
