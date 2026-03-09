@@ -1,8 +1,8 @@
-import mlx
+from mazegen import mlx
 import sys
 import os
-from mazegen.parser import parse_config
 from mazegen.generator import MazeGenerator
+from mazegen.maze_data import MazeData
 
 
 class MazeVisualizer:
@@ -186,25 +186,13 @@ class MazeVisualizer:
 
 
     def regenerate_maze(self):
-        """Usa o MazeGenerator real para criar um novo labirinto"""
-        largura = self.gen_width
-        altura = self.gen_height
-        entry = (0, 0)
-        exit_p = (largura - 1, altura - 1)
-        
-        # 1. Instancia o seu gerador
-        gen = MazeGenerator(largura, altura)
-        
-        # 2. Gera o labirinto
-        gen.generate(entry, exit_p, perfect=False)
-        
-        # 3. Converte os dados para o formato que o VizuAmaze entende
-        self.amaze = converter_para_vizu(gen, entry, exit_p)
-        
-        # 5. Reinicia a lista de caminho e animação
+        gen = MazeGenerator(self.gen_width, self.gen_height, self.seed)
+        gen.generate(self.entry, self.exit_p, self.perfect)
+        maze_data = MazeData(gen, self.entry, self.exit_p)
+        self.amaze = maze_data.matrix
         self.path_cells = self._build_path_list()
         self.path_reveal_index = 0
-        print("Novo labirinto gerado com sucesso!")
+        self.frame_counter = 0
 
 
     def handle_close(self, param):
