@@ -1,6 +1,7 @@
 import sys
-from mazegen.parser import parse_config
-from mazegen.generator import MazeGenerator, save_maze_to_file
+from mazegen.parser import parse_config, validate_config
+from mazegen.generator import MazeGenerator
+from mazegen.export import save_maze_to_file
 from mazegen.visualizer import MazeVisualizer
 
 
@@ -18,7 +19,8 @@ def main() -> None:
 
     try:
         # 1. Parse com tratamento de erros (Chapter IV.2 e IV.3)
-        settings = parse_config(config_path)
+        raw_settings = parse_config(config_path)
+        settings = validate_config(raw_settings)
 
         # 2. Geração respeitando os requisitos mandatórios (Chapter IV.4)
         gen = MazeGenerator(

@@ -62,7 +62,7 @@ def validate_config(raw_data: dict[str, Any]) -> dict[str, Any]:
             parts = [p.strip() for p in s.split(',')]
             if len(parts) != 2:
                 raise ValueError(f"Invalid coordinate format: {s}")
-            return (int(parts), int(parts[1]))
+            return (int(parts[0]), int(parts[1]))
 
         # Coordinate and filename validation
         valid_config['ENTRY'] = parse_coords(raw_data['ENTRY'])
