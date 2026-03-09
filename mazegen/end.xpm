@@ -1,27 +1,27 @@
 /* XPM */
-static char *path_end[] = {
-/* largura altura num_cores caracteres_por_pixel */
+static char *path_marker[] = {
+/* width height num_colors chars_per_pixel */
 "16 16 4 1",
-/* Definição das Cores */
-"  c None",    /* Transparente */
-". c #FF0000", /* Vermelho Brilhante */
-"+ c #8B0000", /* Vermelho Escuro (Bordas) */
-"# c #FFFFFF", /* Branco (Brilho no centro) */
-/* Desenho do Ícone */
+/* colors */
+"  c None",
+". c #FFD700",
+"+ c #FFA500",
+"# c #FF8C00",
+/* pixels */
 "                ",
-"   .........    ",
-"   .........    ",
-"   ...          ",
-"   ...          ",
-"   ...          ",
-"   .........    ",
-"   .........    ",
-"   ...          ",
-"   ...          ",
-"   ...          ",
-"   .........    ",
-"   .........    ",
 "                ",
+"      ....      ",
+"     ......     ",
+"    ..++++..    ",
+"    .+####+.    ",
+"   ..+####+..   ",
+"   ..+####+..   ",
+"   ..+####+..   ",
+"   ..+####+..   ",
+"    .+####+.    ",
+"    ..++++..    ",
+"     ......     ",
+"      ....      ",
 "                ",
 "                "
 };

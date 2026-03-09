@@ -1,21 +1,22 @@
 /* XPM */
-static char *wall_h[] = {
+static char *wall_h_xpm[] = {
 "16 16 2 1",
-"  c #1A1A2E", /* Fundo Escuro */
-". c #FFFF00", /* Amarelo */
+"  c #0A0A1A", /* Fundo Escuro */
+". c #cbd175ff", /* Amarelo */
 "                ",
 "                ",
 "                ",
 "                ",
 "                ",
 "                ",
-"                ",
-"................", /* Linha no meio */
-"                ",
-"                ",
-"                ",
-"                ",
+"       ..       ",
+"................", /* Toca a borda esquerda e direita */
+"................", 
+"       ..       ",
 "                ",
 "                ",
 "                ",
-"                "};
+"                ",
+"                ",
+"                "
+};

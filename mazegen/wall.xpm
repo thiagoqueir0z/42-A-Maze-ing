@@ -2,7 +2,7 @@
 static char *wall_xpm[] = {
 "16 16 2 1",
 "  c #000000", /* Espaço vazio = Preto */
-". c #00FF00", /* Ponto = Verde Brilhante */
+". c #b455b0ff", /* Ponto = Verde Brilhante */
 "................",
 ".              .",
 ".              .",

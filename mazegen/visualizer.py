@@ -2,14 +2,80 @@ import mlx
 import sys
 import os
 from mazegen.parser import parse_config
+from mazegen.generator import MazeGenerator
 import random
 
 
-class VizuAmaze:
+def converter_para_vizu(generator, entry=None, exit_p=None):
+    """Converte a grid bitwise (N,E,S,W) para matriz visual com paredes e corredores."""
+    if entry is None:
+        entry = (0, 0)
+    if exit_p is None:
+        exit_p = (generator.width - 1, generator.height - 1)
+
+    viz_h = generator.height * 2 + 1
+    viz_w = generator.width * 2 + 1
+    grade_vizu = [['W' for _ in range(viz_w)] for _ in range(viz_h)]
+
+    for y in range(generator.height):
+        for x in range(generator.width):
+            cell = generator.grid[y][x]
+            vx = x * 2 + 1
+            vy = y * 2 + 1
+
+            grade_vizu[vy][vx] = '0'
+            if not (cell & 1):
+                grade_vizu[vy - 1][vx] = '0'
+            if not (cell & 2):
+                grade_vizu[vy][vx + 1] = '0'
+            if not (cell & 4):
+                grade_vizu[vy + 1][vx] = '0'
+            if not (cell & 8):
+                grade_vizu[vy][vx - 1] = '0'
+
+    px = entry[0] * 2 + 1
+    py = entry[1] * 2 + 1
+    grade_vizu[py][px] = 'P'
+
+    for step in getattr(generator, 'solution', ''):
+        if step == 'N':
+            py -= 1
+            grade_vizu[py][px] = 'P'
+            py -= 1
+            grade_vizu[py][px] = 'P'
+        elif step == 'S':
+            py += 1
+            grade_vizu[py][px] = 'P'
+            py += 1
+            grade_vizu[py][px] = 'P'
+        elif step == 'E':
+            px += 1
+            grade_vizu[py][px] = 'P'
+            px += 1
+            grade_vizu[py][px] = 'P'
+        elif step == 'W':
+            px -= 1
+            grade_vizu[py][px] = 'P'
+            px -= 1
+            grade_vizu[py][px] = 'P'
+
+    start_vx = entry[0] * 2 + 1
+    start_vy = entry[1] * 2 + 1
+    end_vx = exit_p[0] * 2 + 1
+    end_vy = exit_p[1] * 2 + 1
+    grade_vizu[start_vy][start_vx] = 'S'
+    grade_vizu[end_vy][end_vx] = 'E'
+
+    return grade_vizu
+
+
+class MazeVisualizer:
     def __init__(self, maze, tile_size=32, config_path=None):
         self.amaze = maze
         self.h = len(maze)
         self.w = len(maze[0])
+        self.gen_width = (self.w - 1) // 2 if self.w % 2 == 1 else self.w
+        self.gen_height = (self.h - 1) // 2 if self.h % 2 == 1 else self.h
 
         if config_path:
             try:
@@ -23,10 +89,9 @@ class VizuAmaze:
         self.show_path = True
         self.wall_index = 0
         self.path_reveal_index = 0
-        self.reveal_speed = 10
+        self.reveal_speed = 3
         self.frame_counter = 0
         self.path_cells = self._build_path_list()
-        self.footer = 80
 
         self.gui = mlx.Mlx()
         self.m_ptr = self.gui.mlx_init()
@@ -34,18 +99,15 @@ class VizuAmaze:
         self.win = self.gui.mlx_new_window(
             self.m_ptr, 
             self.w * self.tile_size, 
-            self.h * self.tile_size + self.footer,
+            self.h * self.tile_size,
             "A-Maze-ing"
         )
         self.utils = {
             'bg': self._get_img("bg.xpm"),
+            'wall_h': self._get_img("wall_h.xpm"),
+            'wall_v': self._get_img("wall_v.xpm"),
+            'wall_c': self._get_img("wall_c.xpm"),
             'wall': self._get_img("wall.xpm"),
-            'wall_2': self._get_img("wall_2.xpm"),
-            # 'wall_3': self._get_img("wall_3.xpm"),
-            # 'wall_4': self._get_img("wall_4.xpm"),
-            # 'wall_5': self._get_img("wall_5.xpm"),
-            # 'wall_6': self._get_img("wall_6.xpm"),
-            # 'wall_7': self._get_img("wall_7.xpm"),
             'start': self._get_img("start.xpm"),
             'end': self._get_img("end.xpm"),
             'path': self._get_img("path.xpm")
@@ -72,7 +134,7 @@ class VizuAmaze:
 
         try:
             if isinstance(img, (list, tuple)):
-                if len(img) >= 1:      # mlx_string_put usa ~6 pixels por caractere
+                if len(img) >= 1:
                     img_ptr = img[0]
                 if len(img) >= 3:
                     img_w = img[1]
@@ -112,15 +174,18 @@ class VizuAmaze:
 
         for y in range(self.h):
             for x in range(self.w):
-                value = self.amaze[y][x]
                 x_px = x * self.tile_size
                 y_px = y * self.tile_size
 
                 self._draw_centered('bg', x_px, y_px)
                 
+                value = self.amaze[y][x]
                 if value == 'W':
-                    sprite_conectado = self._get_wall_sprite(x, y)
-                    self._draw_centered(sprite_conectado, x_px, y_px)
+                    if self.wall_index == 0:
+                        sprite_conectado = self._get_wall_sprite(x, y)
+                        self._draw_centered(sprite_conectado, x_px, y_px)
+                    else:
+                        self._draw_centered('wall', x_px, y_px)
                 elif value == 'S':
                     self._draw_centered('start', x_px, y_px)
                 elif value == 'E':
@@ -130,25 +195,30 @@ class VizuAmaze:
                     cell_index = self._get_cell_reveal_order(x, y)
                     if cell_index < self.path_reveal_index:
                         self._draw_centered('path', x_px, y_px)
-        
-        self._draw_help_text()
-        return 0
-    
+        return 0 
+
+
     def _get_wall_sprite(self, x, y):
-    # Verifica se os vizinhos são paredes ('W')
+    # Verifica vizinhos (W)
         up = y > 0 and self.amaze[y-1][x] == 'W'
         down = y < self.h - 1 and self.amaze[y+1][x] == 'W'
         left = x > 0 and self.amaze[y][x-1] == 'W'
         right = x < self.w - 1 and self.amaze[y][x+1] == 'W'
 
-        # Se tem vizinho na horizontal mas não na vertical
-        if (left or right) and not (up or down):
-            return 'wall_h'
-        # Se tem vizinho na vertical mas não na horizontal
+        # 1. Se for uma linha RETA Vertical (tem em cima/baixo mas não nas laterais)
         if (up or down) and not (left or right):
             return 'wall_v'
-        # Se for uma quina ou cruzamento
-        return 'wall_c'
+        
+        # 2. Se for uma linha RETA Horizontal (tem nas laterais mas não em cima/baixo)
+        if (left or right) and not (up or down):
+            return 'wall_h'
+        
+        # 3. Se tiver vizinhos em AMBAS as direções (quina ou cruzamento)
+        if (up or down) and (left or right):
+            return 'wall_c' # Usa o tile com a cruz '+'
+
+        # 4. Caso isolado (uma parede solta)
+        return 'wall' # Um ponto ou cruz pequena padrão
 
     def _get_cell_reveal_order(self, x, y):
         """Retorna índice de revelação da célula (ou infinito se não for caminho)"""
@@ -156,22 +226,6 @@ class VizuAmaze:
             return self.path_cells.index((x, y))
         except ValueError:
             return float('inf')
-
-    def _draw_help_text(self):
-        """Desenha legenda de comandos compacta"""
-        footer_text = "   H: path C: color " \
-        "R: reset SPACE: regen " \
-        "ESC: quit"
-        text_x = 10
-        text_y = self.h * self.tile_size + 12
-        self.gui.mlx_string_put(
-            self.m_ptr,
-            self.win,
-            text_x,
-            text_y,
-            0xFFFFFF,
-            footer_text
-        )
 
 
     def close_app(self):
@@ -191,8 +245,8 @@ class VizuAmaze:
         elif keycode == 104 or keycode == 4: # 104 é 'h'
             self.show_path = not self.show_path
         elif keycode == 99 or keycode == 8: # 99 é 'c'
-            self.wall_index = (self.wall_index + 1) % 7
-            print(f"Wall color: {self.wall_index + 1}/7")
+            self.wall_index = (self.wall_index + 1) % 2
+            print(f"Wall style: {self.wall_index + 1}/2")
         elif keycode == 32: # espaco
             self.regenerate_maze()
         elif keycode == 114:  # 'r' = reset animação
@@ -202,10 +256,25 @@ class VizuAmaze:
 
 
     def regenerate_maze(self):
-        # Aqui você colocaria seu algoritmo real (DFS, Prim, etc.)
-        # Para o exemplo, vamos apenas embaralhar as linhas:
-        random.shuffle(self.amaze)
-        print("Novo labirinto!")
+        """Usa o MazeGenerator real para criar um novo labirinto"""
+        largura = self.gen_width
+        altura = self.gen_height
+        entry = (0, 0)
+        exit_p = (largura - 1, altura - 1)
+        
+        # 1. Instancia o seu gerador
+        gen = MazeGenerator(largura, altura)
+        
+        # 2. Gera o labirinto
+        gen.generate(entry, exit_p, perfect=False)
+        
+        # 3. Converte os dados para o formato que o VizuAmaze entende
+        self.amaze = converter_para_vizu(gen, entry, exit_p)
+        
+        # 5. Reinicia a lista de caminho e animação
+        self.path_cells = self._build_path_list()
+        self.path_reveal_index = 0
+        print("Novo labirinto gerado com sucesso!")
 
 
     def handle_close(self, param):
@@ -222,12 +291,17 @@ class VizuAmaze:
 
 
 if __name__ == "__main__":
-    exemplo_matriz = [
-       ['W', 'W', 'W', 'W', 'W', 'W', 'W'],
-        ['W', 'S', '0', '0', '0', '0', 'W'],
-        ['W', 'P', '0', '0', '0', '0', 'W'],
-        ['W', 'P', 'P', 'P', 'P', 'E', 'W'],
-        ['W', 'W', 'W', 'W', 'W', 'W', 'W'],
-    ]
-    app = VizuAmaze(exemplo_matriz, config_path='config.txt')
+    # Dimensões para o efeito de "circuito denso" que você quer
+    largura, altura = 35, 35
+    entry, exit_p = (0, 0), (largura - 1, altura - 1)
+    
+    # Gera o labirinto inicial usando a sua classe
+    gen = MazeGenerator(largura, altura)
+    gen.generate(entry, exit_p, perfect=False)
+    
+    # Converte já marcando entrada/saída nas posições corretas
+    matriz_inicial = converter_para_vizu(gen, entry, exit_p)
+    
+    # Inicia o visualizador com tile_size 16 para linhas finas
+    app = MazeVisualizer(matriz_inicial, tile_size=16)
     app.run()
