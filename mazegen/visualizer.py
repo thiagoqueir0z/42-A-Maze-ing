@@ -6,16 +6,22 @@ from mazegen.maze_data import MazeData
 
 
 class MazeVisualizer:
-    def __init__(self, maze_or_gen, settings=None):
-        """Inicializa o visualizador. Aceita MazeGenerator ou matriz visual já convertida.
-        
-        Args:
-            maze_or_gen: MazeGenerator object ou matriz visual (list[list[str]])
-            settings: dict com ENTRY, EXIT, TILE_SIZE (quando maze_or_gen é MazeGenerator)
-        """
+    def __init__(self, maze, tile_size=32, config_path=None):
+        self.amaze = maze
+        self.h = len(maze)
+        self.w = len(maze[0])
+        self.gen_width = (self.w - 1) // 2 if self.w % 2 == 1 else self.w
+        self.gen_height = (self.h - 1) // 2 if self.h % 2 == 1 else self.h
 
-        self.h = int(len(self.amaze))
-        self.w = int(len(self.amaze[0]))
+        if config_path:
+            try:
+                config = parse_config(config_path)
+                self.tile_size = int(config.get('TILE_SIZE', tile_size))
+            except Exception:
+                self.tile_size = tile_size
+        else:
+            self.tile_size = tile_size
+
         self.show_path = True
         self.wall_index = 0
         self.path_reveal_index = 0
