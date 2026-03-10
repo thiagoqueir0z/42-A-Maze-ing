@@ -3,7 +3,7 @@ NAME     = a_maze_ing.py
 SRC      = a_maze_ing.py mazegen/
 PYTHON   = python3
 PIP      = pip
-CONFIG = config.txt
+CONFIG   = config.txt
 
 
 all: run
@@ -28,17 +28,13 @@ lint:
 	--check-untyped-defs
 
 lint-strict:
-	flake8 .
-	mypy --strict . 
-
-package:
-	$(PYTHON) setup.py sdist bdist_wheel
-	mv dist/*.tar.gz .
-	mv dist/*.whl .
+	$(PYTHON) -m flake8 .
+	$(PYTHON) -m mypy --strict .
 
 clean:
 	rm -rf dist/ build/ *.egg-info
 	rm -rf *.tar.gz *.whl
-	find . -type d \( -name "__pycache__" -o -name ".mypy_cache" \) -exec rm -rf {} \;
+	find . -type d \( -name "__pycache__" -o -name ".mypy_cache" \) \
+		-exec rm -rf {} + 2>/dev/null; true
 
-.PHONY: all install run debug lint clean
+.PHONY: all install run debug lint lint-strict clean

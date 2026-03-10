@@ -2,7 +2,10 @@ import sys
 from mazegen.parser import parse_config, validate_config
 from mazegen.generator import MazeGenerator
 from mazegen.export import save_maze_to_file
-from mazegen.visualizer import MazeVisualizer
+from mazegen import _has_visualizer
+
+if _has_visualizer:
+    from mazegen.visualizer import MazeVisualizer
 
 
 def main() -> None:
@@ -40,13 +43,18 @@ def main() -> None:
         print(f"Maze successfully saved to {output_filename}")
 
         # 4. Representação Visual do Chapter V
-        visualizer = MazeVisualizer(gen, settings)
-        print("\n=== A-Maze-ing - Commands ===")
-        print("  H       - Show/Hide path")
-        print("  C       - Change color")
-        print("  SPACE   - Regen")
-        print("  ESC     - Exit")
-        visualizer.run()
+        if _has_visualizer:
+            visualizer = MazeVisualizer(gen, settings)
+            print("\n=== A-Maze-ing - Commands ===")
+            print("  H       - Show/Hide path")
+            print("  C       - Change color")
+            print("  SPACE   - Regen")
+            print("  ESC     - Exit")
+            visualizer.run()
+        else:
+            sys.stderr.write(
+                "Warning: Visual display unavailable (mlx not installed).\n"
+            )
 
     except FileNotFoundError:
         sys.stderr.write(
