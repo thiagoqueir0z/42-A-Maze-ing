@@ -42,6 +42,7 @@ class MazeVisualizer:
 
         self.show_path = True
         self.wall_index = 0
+        self.needs_redraw = True
         if self.path_cells is None:
             self.path_cells = self._build_path_list()
 
@@ -125,6 +126,9 @@ class MazeVisualizer:
 
 
     def draw_amaze(self, param=None):
+        if not self.needs_redraw:
+            return 0
+            
         for y in range(self.h):
             for x in range(self.w):
                 x_px = x * self.tile_size
@@ -141,6 +145,12 @@ class MazeVisualizer:
                         self._draw_centered('wall', x_px, y_px)
                 elif value == 'P' and self.show_path:
                     self._draw_centered('path', x_px, y_px)
+                elif value == 'S':
+                    self._draw_centered('start', x_px, y_px)
+                elif value == 'E':
+                    self._draw_centered('end', x_px, y_px)
+        
+        self.needs_redraw = False
         return 0 
 
 
@@ -182,9 +192,11 @@ class MazeVisualizer:
             self.close_app()
         elif keycode == 104 or keycode == 4: # 104 é 'h'
             self.show_path = not self.show_path
+            self.needs_redraw = True
         elif keycode == 99 or keycode == 8: # 99 é 'c'
             self.wall_index = (self.wall_index + 1) % 2
             print(f"Wall style: {self.wall_index + 1}/2")
+            self.needs_redraw = True
         elif keycode == 32: # espaco
             self.regenerate_maze()
         return 0
@@ -196,6 +208,7 @@ class MazeVisualizer:
         maze_data = MazeData(gen, self.entry, self.exit_p)
         self.amaze = maze_data.matrix
         self.path_cells = maze_data.path
+        self.needs_redraw = True
 
 
     def handle_close(self, param):
@@ -204,6 +217,7 @@ class MazeVisualizer:
 
 
     def run(self):
+        
         self.gui.mlx_key_hook(self.win, self.handle_keys, None)
         self.gui.mlx_hook(self.win, 17, 0, self.handle_close, None)
         self.gui.mlx_hook(self.win, 33, 0, self.handle_close, None)
