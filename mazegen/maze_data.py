@@ -29,9 +29,9 @@ class MazeData:
                 if not (val & 8):
                     matriz[vy][vx - 1] = '0'
 
-        for px, py in self.path:
-            if 0 <= py < viz_h and 0 <= px < viz_w and matriz[py][px] != 'W':
-                matriz[py][px] = 'P'
+        # for px, py in self.path:
+            # if 0 <= py < viz_h and 0 <= px < viz_w and matriz[py][px] != 'W':
+                # matriz[py][px] = 'P'
 
         start_vx = self.entry[0] * 2 + 1
         start_vy = self.entry[1] * 2 + 1
