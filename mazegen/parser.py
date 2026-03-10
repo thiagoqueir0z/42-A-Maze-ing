@@ -49,6 +49,11 @@ def validate_config(raw_data: dict[str, Any]) -> dict[str, Any]:
         # Mandatory integer validation
         valid_config['WIDTH'] = int(raw_data['WIDTH'])
         valid_config['HEIGHT'] = int(raw_data['HEIGHT'])
+
+        # Logical constraints validation (Chapter IV.4)
+        if valid_config['WIDTH'] <= 0 or valid_config['HEIGHT'] <= 0:
+            raise ValueError("WIDTH and HEIGHT must be greater than zero.")
+
         # Optional SEED for reproducibility in Chapter IV.4
         if 'SEED' in raw_data:
             valid_config['SEED'] = int(raw_data['SEED'])
@@ -68,6 +73,8 @@ def validate_config(raw_data: dict[str, Any]) -> dict[str, Any]:
         valid_config['ENTRY'] = parse_coords(raw_data['ENTRY'])
         valid_config['EXIT'] = parse_coords(raw_data['EXIT'])
         valid_config['OUTPUT_FILE'] = raw_data['OUTPUT_FILE'].strip()
+        if not valid_config['OUTPUT_FILE']:
+            raise ValueError("OUTPUT_FILE cannot be empty.")
 
         # TILE_SIZE opcional, padrão 32
         if 'TILE_SIZE' in raw_data:
@@ -77,9 +84,6 @@ def validate_config(raw_data: dict[str, Any]) -> dict[str, Any]:
         else:
             valid_config['TILE_SIZE'] = 32
 
-        # Logical constraints validation (Chapter IV.4)
-        if valid_config['WIDTH'] <= 0 or valid_config['HEIGHT'] <= 0:
-            raise ValueError("WIDTH and HEIGHT must be greater than zero.")
         # Entry bounds check
         ex_ent, ey_ent = valid_config['ENTRY']
         if not (

@@ -17,6 +17,10 @@ def save_maze_to_file(
         settings (dict): The validated settings containing ENTRY and EXIT.
         solution (str): The path as a string of directions (N, S, E, W).
     """
+    if not grid_hex:
+        sys.stderr.write("Error: Cannot save empty maze grid.\n")
+        sys.exit(1)
+
     try:
         with open(file_path, 'w', encoding='utf-8') as file:
             for row in grid_hex:

@@ -207,24 +207,6 @@ class MazeGenerator:
                         queue.append(((nx, ny), path + label))
         return ""
 
-    def _get_path_string(self, path: List[Tuple[int, int]]) -> str:
-        """Convert coordinate list to direction string (N, S, E, W)."""
-        if not path:
-            return ""
-        dirs: List[str] = []
-        for i in range(len(path) - 1):
-            (x1, y1), (x2, y2) = path[i], path[i + 1]
-            if y2 < y1:
-                dirs.append("N")
-            elif x2 > x1:
-                dirs.append("E")
-            elif y2 > y1:
-                dirs.append("S")
-            elif x2 < x1:
-                dirs.append("W")
-
-        return "".join(dirs)
-
     def get_hex_grid(self) -> List[str]:
         """
         Convert the internal grid to the hexadecimal format.
