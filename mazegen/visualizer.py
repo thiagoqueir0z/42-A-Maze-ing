@@ -1,23 +1,15 @@
 import os
-import random
-import time
-import math
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterable,
-    Mapping,
-    Optional,
-    Tuple,
-    cast,
-)
+from typing import Any, Callable, Dict, Mapping, Optional, Tuple, cast
+
+from mazegen.animator import AnimatorMixin
 from mazegen.generator import MazeGenerator
 from mazegen.maze_data import MazeData
 from mazegen.mlx import Mlx
+from mazegen.renderer import RendererMixin
+from mazegen.tile_drawer import TileDrawerMixin
 
 
-class MazeVisualizer:
+class MazeVisualizer(RendererMixin, TileDrawerMixin, AnimatorMixin):
     def __init__(
         self,
         maze_gen: MazeGenerator,
@@ -88,205 +80,6 @@ class MazeVisualizer:
         self.cols = len(self.amaze[0])
         self._build_path_animation_map(maze_data.path)
 
-    def _build_path_animation_map(
-        self,
-        path_coords: Iterable[Tuple[int, int]],
-    ) -> None:
-        self.path_reveal_map = {}
-        idx = 0
-        for px, py in path_coords:
-            if (
-                0 <= py < self.rows
-                and 0 <= px < self.cols
-                and self.amaze[py][px] == 'P'
-            ):
-                if (px, py) not in self.path_reveal_map:
-                    self.path_reveal_map[(px, py)] = idx
-                    idx += 1
-        self.path_reveal_max = idx
-        self.path_reveal_index = 0
-        self._last_animation_time = time.time()
-
-    def _should_draw_path_cell(self, x: int, y: int) -> bool:
-        if not self.path_animation_enabled:
-            return True
-        reveal_pos = self.path_reveal_map.get((x, y))
-        if reveal_pos is None:
-            return True
-        return reveal_pos < self.path_reveal_index
-
-    def _reset_path_animation(self) -> None:
-        self.path_reveal_index = 0
-        self._last_animation_time = time.time()
-
-    def _scale_color(self, color: int, factor: float) -> int:
-        def clamp(channel_value: int) -> int:
-            return min(255, max(0, int(channel_value * factor)))
-
-        return (
-            (clamp((color >> 16) & 0xFF) << 16)
-            | (clamp((color >> 8) & 0xFF) << 8)
-            | clamp(color & 0xFF)
-        )
-
-    def _pulse_value(self, phase_shift: float = 0.0) -> float:
-        return (math.sin(self.ui_phase + phase_shift) + 1.0) * 0.5
-
-    def _animated_fortytwo_color(self) -> int:
-        return self._scale_color(
-            self.fortytwo_bg_color,
-            0.75 + 0.35 * self._pulse_value(0.8),
-        )
-
-    def _fill_rect(
-        self,
-        x_px: int,
-        y_px: int,
-        width: int,
-        height: int,
-        color: int,
-    ) -> None:
-        if width <= 0 or height <= 0:
-            return
-
-        x0 = max(0, x_px)
-        y0 = max(0, y_px)
-        x1 = min(self.win_w, x_px + width)
-        y1 = min(self.win_h, y_px + height)
-
-        if x0 >= x1 or y0 >= y1:
-            return
-
-        bytes_per_pixel = max(1, self.bpp // 8)
-        pixel = bytearray(bytes_per_pixel)
-        pixel[0] = color & 0xFF
-        if bytes_per_pixel >= 2:
-            pixel[1] = (color >> 8) & 0xFF
-        if bytes_per_pixel >= 3:
-            pixel[2] = (color >> 16) & 0xFF
-        if bytes_per_pixel >= 4:
-            pixel[3] = 0xFF
-
-        span_width = x1 - x0
-        row_bytes = bytes(pixel) * span_width
-
-        for py in range(y0, y1):
-            row_start = (py * self.stride) + (x0 * bytes_per_pixel)
-            row_end = row_start + len(row_bytes)
-            self.img_data[row_start:row_end] = row_bytes
-
-    def _draw_tile(self, cell_x: int, cell_y: int, color: int) -> None:
-        self._fill_rect(
-            cell_x * self.tile_size,
-            cell_y * self.tile_size,
-            self.tile_size,
-            self.tile_size,
-            color,
-        )
-
-    def _random_color(self) -> int:
-        return random.randint(0, 0xFFFFFF)
-
-    def _is_pathlike(self, x: int, y: int) -> bool:
-        if not (0 <= x < self.cols and 0 <= y < self.rows):
-            return False
-        return self.amaze[y][x] in {'P', 'S', 'E'}
-
-    def _is_wall(self, x: int, y: int) -> bool:
-        if not (0 <= x < self.cols and 0 <= y < self.rows):
-            return False
-        return self.amaze[y][x] == 'W'
-
-    def _draw_path_cell(self, cell_x: int, cell_y: int) -> None:
-        self._draw_tile(cell_x, cell_y, self.floor_color)
-        if not self.show_path:
-            return
-        x_px, y_px = cell_x * self.tile_size, cell_y * self.tile_size
-        mid = self.tile_size // 2
-        t = max(2, self.tile_size // 10)
-        h = t // 2
-        self._fill_rect(x_px + mid - h, y_px + mid - h, t, t, self.path_color)
-        if self._is_pathlike(cell_x, cell_y - 1):
-            self._fill_rect(x_px + mid - h, y_px, t, mid, self.path_color)
-        if self._is_pathlike(cell_x, cell_y + 1):
-            self._fill_rect(
-                x_px + mid - h,
-                y_px + mid,
-                t,
-                self.tile_size - mid,
-                self.path_color,
-            )
-        if self._is_pathlike(cell_x - 1, cell_y):
-            self._fill_rect(x_px, y_px + mid - h, mid, t, self.path_color)
-        if self._is_pathlike(cell_x + 1, cell_y):
-            self._fill_rect(
-                x_px + mid,
-                y_px + mid - h,
-                self.tile_size - mid,
-                t,
-                self.path_color,
-            )
-
-    def _pulse_marker(self, color: int, phase_shift: float) -> Tuple[int, int]:
-        pulse = self._pulse_value(phase_shift)
-        margin = max(1, self.tile_size // 6 - (1 if pulse > 0.55 else 0))
-        return margin, self._scale_color(color, 0.85 + 0.25 * pulse)
-
-    def _draw_start(self, cell_x: int, cell_y: int) -> None:
-        self._draw_path_cell(cell_x, cell_y)
-        margin, color = self._pulse_marker(self.start_color, 0.0)
-        size = self.tile_size - 2 * margin
-        self._fill_rect(
-            cell_x * self.tile_size + margin,
-            cell_y * self.tile_size + margin,
-            size,
-            size,
-            color,
-        )
-
-    def _draw_end(self, cell_x: int, cell_y: int) -> None:
-        self._draw_path_cell(cell_x, cell_y)
-        margin, color = self._pulse_marker(self.end_color, 1.3)
-        x_px, y_px = cell_x * self.tile_size, cell_y * self.tile_size
-        size = self.tile_size - 2 * margin
-        self._fill_rect(x_px + margin, y_px + margin, size, size, color)
-        im = max(1, self.tile_size // 8)
-        self._fill_rect(
-            x_px + margin + im,
-            y_px + margin + im,
-            max(1, size - 2 * im),
-            max(1, size - 2 * im),
-            self.floor_color,
-        )
-
-    def _draw_wall(self, cell_x: int, cell_y: int) -> None:
-        self._draw_tile(cell_x, cell_y, self.background_color)
-        x_px, y_px = cell_x * self.tile_size, cell_y * self.tile_size
-        mid = self.tile_size // 2
-        t = max(1, self.tile_size // 8)
-        h = t // 2
-        self._fill_rect(x_px + mid - h, y_px + mid - h, t, t, self.wall_color)
-        if self._is_wall(cell_x, cell_y - 1):
-            self._fill_rect(x_px + mid - h, y_px, t, mid, self.wall_color)
-        if self._is_wall(cell_x, cell_y + 1):
-            self._fill_rect(
-                x_px + mid - h,
-                y_px + mid,
-                t,
-                self.tile_size - mid,
-                self.wall_color,
-            )
-        if self._is_wall(cell_x - 1, cell_y):
-            self._fill_rect(x_px, y_px + mid - h, mid, t, self.wall_color)
-        if self._is_wall(cell_x + 1, cell_y):
-            self._fill_rect(
-                x_px + mid,
-                y_px + mid - h,
-                self.tile_size - mid,
-                t,
-                self.wall_color,
-            )
-
     def render(self) -> None:
         draw: Dict[str, Callable[[int, int], None]] = {
             'W': self._draw_wall,
@@ -317,35 +110,6 @@ class MazeVisualizer:
             0,
             0,
         )
-
-    def _loop_tick(self, _param: Any) -> None:
-        now = time.time()
-        should_render = False
-
-        if (
-            self.ui_animation_enabled
-            and now - self._last_ui_animation_time
-            >= self.ui_animation_interval
-        ):
-            self._last_ui_animation_time = now
-            self.ui_phase += self.ui_phase_step
-            should_render = True
-
-        if (
-            self.show_path
-            and self.path_animation_enabled
-            and self.path_reveal_index < self.path_reveal_max
-        ):
-            if now - self._last_animation_time >= self.path_animation_interval:
-                self._last_animation_time = now
-                self.path_reveal_index = min(
-                    self.path_reveal_max,
-                    self.path_reveal_index + self.path_animation_step,
-                )
-                should_render = True
-
-        if should_render:
-            self.render()
 
     def _regen(self) -> None:
         if self.seed is not None:
