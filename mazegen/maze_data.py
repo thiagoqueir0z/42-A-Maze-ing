@@ -13,11 +13,15 @@ class MazeData:
         viz_w = self.generator.width * 2 + 1
         viz_h = self.generator.height * 2 + 1
         matriz = [['W' for _ in range(viz_w)] for _ in range(viz_h)]
+        pattern_42 = getattr(self.generator, 'pattern_42', set())
         
         for y in range(self.generator.height):
             for x in range(self.generator.width):
                 vx, vy = x * 2 + 1, y * 2 + 1
-                matriz[vy][vx] = '0'
+                if (x, y) in pattern_42:
+                    matriz[vy][vx] = 'F'
+                else:
+                    matriz[vy][vx] = '0'
 
                 val = self.generator.grid[y][x]
                 if not (val & 1):

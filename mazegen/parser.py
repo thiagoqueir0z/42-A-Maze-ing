@@ -36,7 +36,8 @@ def parse_config(file_path: str) -> dict[str, Any]:
 def validate_config(raw_data: dict[str, Any]) -> dict[str, Any]:
     """
     Convert raw string data from the config file into appropriate Python types.
-
+nagers where possible for automatic handling.
+• Your code must include type hints for function parameters, return types, and variables where applicable (using the typing module). Use mypy for static type ch
     Args:
         raw_data (dict[str, Any]): Dictionary with string keys and values.
 
