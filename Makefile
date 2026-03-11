@@ -10,7 +10,6 @@ all: run
 
 install:
 	$(PYTHON) -m $(PIP) install --user flake8 mypy
-	$(PYTHON) -m $(PIP) install --user mlx-python || true
 
 run:
 	$(PYTHON) $(NAME) $(CONFIG)

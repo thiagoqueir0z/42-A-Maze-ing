@@ -5,17 +5,48 @@
 
 
 from ctypes import *
+from ctypes.util import find_library
 import os
 
 class Mlx:
 
   def __init__(self):
-    module_dir = os.path.dirname(os.path.abspath(__file__))
-    self.so_file = os.path.join(module_dir, "libmlx.so")
+    self.so_file = self._resolve_mlx_library()
     self.mlx_func = CDLL(self.so_file)
     self._python_ref_std = {}
     self._python_ref_gen = {}
     self._img_height = {}
+
+  def _resolve_mlx_library(self):
+    module_dir = os.path.dirname(os.path.abspath(__file__))
+    local_so = os.path.join(module_dir, "libmlx.so")
+
+    env_so = os.environ.get("MLX_SO_PATH")
+    if env_so:
+      return env_so
+
+    if os.path.exists(local_so):
+      return local_so
+
+    system_candidates = [
+      "libmlx.so",
+      "mlx",
+      "mlx_Linux",
+      find_library("mlx"),
+      find_library("mlx_Linux"),
+    ]
+    for candidate in system_candidates:
+      if not candidate:
+        continue
+      try:
+        CDLL(candidate)
+        return candidate
+      except OSError:
+        pass
+
+    raise OSError(
+      "Could not load MLX shared library. Set MLX_SO_PATH or install libmlx.so in the system."
+    )
     
 # Initialisation
   def mlx_init(self):
