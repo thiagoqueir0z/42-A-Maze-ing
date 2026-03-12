@@ -10,11 +10,27 @@ from mazegen.tile_drawer import TileDrawerMixin
 
 
 class MazeVisualizer(RendererMixin, TileDrawerMixin, AnimatorMixin):
+    """
+    Handle the graphical representation and user interaction of the maze.
+
+    This class manages the MiniLibX (MLX) window, renders maze tiles,
+    controls path animations, and responds to keyboard events for
+    regeneration or visual customization.
+    """
+
     def __init__(
         self,
         maze_gen: MazeGenerator,
         settings: Mapping[str, Any],
     ) -> None:
+        """
+        Initialize the visualizer with the provided generator and settings.
+
+        Args:
+            maze_gen: An instance of MazeGenerator containing the maze logic.
+            settings: A mapping containing configuration keys such as
+                'TILE_SIZE', 'ENTRY', 'EXIT', 'PERFECT', and 'SEED'.
+        """
         self.gui = Mlx()
         self.mlx_ptr = self.gui.mlx_init()
 
@@ -74,6 +90,12 @@ class MazeVisualizer(RendererMixin, TileDrawerMixin, AnimatorMixin):
         self.img_data = addr_info[0]
 
     def _load_maze_data(self, maze_gen: MazeGenerator) -> None:
+        """
+        Process raw generator data into a visual matrix format.
+
+        Args:
+            maze_gen: The maze generator containing the logical structure.
+        """
         maze_data = MazeData(maze_gen, self.entry, self.exit_p)
         self.amaze = maze_data.matrix
         self.rows = len(self.amaze)
@@ -81,6 +103,13 @@ class MazeVisualizer(RendererMixin, TileDrawerMixin, AnimatorMixin):
         self._build_path_animation_map(maze_data.path)
 
     def render(self) -> None:
+        """
+        Draw the current maze state to the image buffer and display the window.
+
+        Iterates through the maze matrix, drawing walls,
+        floors, entry/exit points,
+        and the solution path if active, using static or animated colors.
+        """
         draw: Dict[str, Callable[[int, int], None]] = {
             'W': self._draw_wall,
             'S': self._draw_start,
@@ -112,6 +141,8 @@ class MazeVisualizer(RendererMixin, TileDrawerMixin, AnimatorMixin):
         )
 
     def _regen(self) -> None:
+        """Regenerate the maze by incrementing the seed
+        and updating the data."""
         if self.seed is not None:
             self.seed += 1
         maze_gen = MazeGenerator(self.gen_width, self.gen_height, self.seed)
@@ -120,6 +151,16 @@ class MazeVisualizer(RendererMixin, TileDrawerMixin, AnimatorMixin):
         self.render()
 
     def _handle_key(self, keycode: int, _param: Any) -> None:
+        """
+        Handle user keyboard inputs.
+
+        Shortcuts:
+            - ESC: Exit the application.
+            - H: Toggle path visibility.
+            - C: Randomize wall color.
+            - F: Randomize highlight color.
+            - Space: Regenerate the maze.
+        """
         if keycode in [65307, 53]:
             os._exit(0)
         if keycode in [104, 4]:
@@ -137,9 +178,16 @@ class MazeVisualizer(RendererMixin, TileDrawerMixin, AnimatorMixin):
             self._regen()
 
     def _handle_close(self, _param: Any) -> None:
+        """Terminate the program cleanly when the window is closed."""
         os._exit(0)
 
     def run(self) -> None:
+        """
+        Start the MiniLibX main event loop.
+
+        Configures keyboard hooks, window closure hooks, and the loop hook
+        used for constant UI and path animations.
+        """
         self.gui.mlx_key_hook(self.win, self._handle_key, None)
         self.gui.mlx_hook(self.win, 17, 0, self._handle_close, None)
         self.gui.mlx_loop_hook(self.mlx_ptr, self._loop_tick, None)

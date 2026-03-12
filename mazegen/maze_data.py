@@ -8,12 +8,30 @@ Matrix = List[List[str]]
 
 
 class MazeData:
+    """
+    Process and hold the structural and visual data of a generated maze.
+
+    This class converts the bitwise grid representation from a MazeGenerator
+    into a larger, display-ready character matrix (2N+1 scale), identifying
+    walls, floors, paths, and special markers.
+    """
+
     def __init__(
         self,
         generator: MazeGenerator,
         entry: Optional[Coord] = None,
         exit_p: Optional[Coord] = None,
     ) -> None:
+        """
+        Initialize MazeData by processing the generator's current state.
+
+        Args:
+            generator: The MazeGenerator instance containing the raw grid.
+            entry: Optional coordinates for the starting point.
+            Defaults to (0, 0).
+            exit_p: Optional coordinates for the end point.
+            Defaults to bottom-right.
+        """
         self.generator = generator
         self.entry: Coord = entry if entry is not None else (0, 0)
         self.exit_p: Coord = (
@@ -24,6 +42,18 @@ class MazeData:
         self.matrix: Matrix = self._generate_visual_matrix()
 
     def _generate_visual_matrix(self) -> Matrix:
+        """
+        Transform the bitwise grid into a
+        character-based 2D matrix.
+
+        The matrix uses a 2N+1 scaling to represent both cells and the
+        walls between them. Characters used:
+        'W' for walls, '0' for floor, 'F' for pattern, 'P' for path,
+        'S' for start, and 'E' for end.
+
+        Returns:
+            A 2D list of characters representing the visual maze.
+        """
         viz_w = self.generator.width * 2 + 1
         viz_h = self.generator.height * 2 + 1
         matriz: Matrix = [['W' for _ in range(viz_w)] for _ in range(viz_h)]
@@ -68,6 +98,16 @@ class MazeData:
         return matriz
 
     def _generate_path_list(self) -> List[Coord]:
+        """
+        Convert a directional solution string into
+        a list of matrix coordinates.
+
+        Translates 'N', 'E', 'S', 'W' directions from the generator's solution
+        into specific (x, y) steps adapted for the 2N+1 visual matrix.
+
+        Returns:
+            A list of coordinates representing the solution path.
+        """
         solution = getattr(self.generator, 'solution', '')
         if not solution:
             return []

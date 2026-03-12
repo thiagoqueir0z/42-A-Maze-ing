@@ -2,6 +2,12 @@ import random
 
 
 class RendererMixin:
+    """
+    Provide low-level pixel manipulation and color calculation methods.
+
+    This mixin handles direct memory writing for rectangle drawing, tile
+    rendering, and color transformations used by the visualizer.
+    """
 
     def _fill_rect(
         self,
@@ -11,6 +17,20 @@ class RendererMixin:
         height: int,
         color: int,
     ) -> None:
+        """
+        Fill a rectangular area in the image buffer with a specific color.
+
+        Uses direct memory slicing for optimized row-by-row pixel filling,
+        handling clipping against window boundaries
+        and pixel-to-byte conversion.
+
+        Args:
+            x_px: The starting x-coordinate in pixels.
+            y_px: The starting y-coordinate in pixels.
+            width: The width of the rectangle in pixels.
+            height: The height of the rectangle in pixels.
+            color: Hexadecimal color value to apply.
+        """
         if width <= 0 or height <= 0:
             return
 
@@ -41,6 +61,14 @@ class RendererMixin:
             self.img_data[row_start:row_end] = row_bytes
 
     def _draw_tile(self, cell_x: int, cell_y: int, color: int) -> None:
+        """
+        Draw a single grid cell as a colored square.
+
+        Args:
+            cell_x: The horizontal grid index.
+            cell_y: The vertical grid index.
+            color: Hexadecimal color value.
+        """
         self._fill_rect(
             cell_x * self.tile_size,
             cell_y * self.tile_size,
@@ -50,6 +78,18 @@ class RendererMixin:
         )
 
     def _scale_color(self, color: int, factor: float) -> int:
+        """
+        Adjust the brightness of a color by a given factor.
+
+        Args:
+            color: The base hexadecimal color.
+            factor: Multiplication factor
+            (e.g., 0.5 for darker, 1.5 for lighter).
+
+        Returns:
+            The resulting hexadecimal color clamped
+            between 0x000000 and 0xFFFFFF.
+        """
         def clamp(channel_value: int) -> int:
             return min(255, max(0, int(channel_value * factor)))
 
@@ -60,4 +100,10 @@ class RendererMixin:
         )
 
     def _random_color(self) -> int:
+        """
+        Generate a random 24-bit hexadecimal color.
+
+        Returns:
+            An integer representing a color in 0xRRGGBB format.
+        """
         return random.randint(0, 0xFFFFFF)
