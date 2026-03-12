@@ -56,7 +56,8 @@ def parse_config(file_path: str) -> dict[str, Any]:
                 key = key.strip()
                 value = value.strip()
 
-                # Reject lines where the key itself contains spaces/extra tokens
+                # Reject lines where the key itself
+                # contains spaces/extra tokens
                 if ' ' in key or not key:
                     sys.stderr.write(
                         f"Error: Line {line_number} has an invalid key "
@@ -70,7 +71,8 @@ def parse_config(file_path: str) -> dict[str, Any]:
                         sys.stderr.write(
                             f"Error: Invalid value for '{key}' on line "
                             f"{line_number}: '{value}'\n"
-                            f"  Expected format: {_FIELD_PATTERNS[key].pattern}\n"
+                            f"  Expected format: "
+                            f"{_FIELD_PATTERNS[key].pattern}\n"
                         )
                         sys.exit(1)
 

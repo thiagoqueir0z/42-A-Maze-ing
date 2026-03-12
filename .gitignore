@@ -5,7 +5,6 @@ __pycache__/
 
 # Mypy e ferramentas de lint
 .mypy_cache/
-.flake8
 
 # Pacotes e Distribuição (para a parte da Maria)
 build/
@@ -26,5 +25,5 @@ thumbs.db
 # Saídas geradas em runtime
 maze.txt
 
-#(O ponto de exclamação diz ao Git para "não ignorar" este ficheiro específico).
+# Não ignorar este ficheiro específico.
 !mazegen_mariaalm-1.0.0-py3-none-any.whl

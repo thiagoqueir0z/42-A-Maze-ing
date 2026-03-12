@@ -1,6 +1,6 @@
 import sys
 import random
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Set
 from collections import deque
 
 
@@ -33,7 +33,7 @@ class MazeGenerator:
         self.height = height
         self.seed = seed
         self.solution: str = ""
-        self.pattern_42: set[Tuple[int, int]] = set()
+        self.pattern_42: Set[Tuple[int, int]] = set()
 
         if seed is not None:
             random.seed(seed)
@@ -43,8 +43,15 @@ class MazeGenerator:
             for _ in range(height)
         ]
 
-    def _draw_42(self, visited: set[Tuple[int, int]]) -> None:
-        """Draw the number 42 by blocking cells (mandatory requirement)."""
+    def _draw_42(self, visited: Set[Tuple[int, int]]) -> None:
+        """
+        Adds the '42' pattern cells to the visited set before DFS,
+        preventing the algorithm from carving through them.
+
+        Args:
+            visited (set[Tuple[int, int]]): The set of already-visited
+                cells shared with the DFS algorithm.
+        """
         self.pattern_42 = set()
         if self.width >= 9 and self.height >= 9:
             offset_x = self.width // 2 - 2
@@ -77,7 +84,19 @@ class MazeGenerator:
             chance (float): Probability of removing an internal wall.
         """
         def is_3x3_open(sx: int, sy: int) -> bool:
-            """Helper to check if a 3x3 area starting is fully open."""
+            """
+            Check if a 3x3 area starting at (sx, sy) is fully open.
+            Used to prevent the imperfect maze from creating large
+            open areas with no walls.
+
+            Args:
+                sx (int): Starting x coordinate of the 3x3 area.
+                sy (int): Starting y coordinate of the 3x3 area.
+
+            Returns:
+                bool: True if the entire 3x3 area has no internal
+                    walls, False otherwise.
+            """
             if (
                 sx < 0
                 or sy < 0
@@ -140,50 +159,83 @@ class MazeGenerator:
         exit_p: Tuple[int, int],
         perfect: bool = True
     ) -> None:
-        """Carve the maze using Recursive Backtracker and find solution."""
-        stack: List[Tuple[int, int]] = [entry]
-        visited: set[Tuple[int, int]] = {entry}
-        self._draw_42(visited)
+        """
+        Carve the maze using the Recursive Backtracker (DFS) algorithm.
 
-        dirs: List[Tuple[int, int, int, int]] = [
-            (0, -1, 1, 4),
-            (1, 0, 2, 8),
-            (0, 1, 4, 1),
-            (-1, 0, 8, 2),
-        ]
+        Args:
+            entry (Tuple[int, int]): The starting cell (x, y).
+            exit_p (Tuple[int, int]): The target cell (x, y).
+            perfect (bool): If True, generates a perfect maze with a
+                unique path. If False, removes additional walls to
+                create cycles. Defaults to True.
+        """
+        try:
+            stack: List[Tuple[int, int]] = [entry]
+            visited: Set[Tuple[int, int]] = {entry}
+            self._draw_42(visited)
 
-        while stack:
-            cx, cy = stack[-1]
+            dirs: List[Tuple[int, int, int, int]] = [
+                (0, -1, 1, 4),
+                (1, 0, 2, 8),
+                (0, 1, 4, 1),
+                (-1, 0, 8, 2),
+            ]
 
-            neighbors: List[Tuple[int, int, int, int]] = []
-            for dx, dy, bc, bn in dirs:
-                nx, ny = cx + dx, cy + dy
-                if 0 <= nx < self.width and 0 <= ny < self.height:
-                    if (nx, ny) not in visited:
-                        neighbors.append((nx, ny, bc, bn))
+            while stack:
+                cx, cy = stack[-1]
+                neighbors: List[Tuple[int, int, int, int]] = []
+                for dx, dy, bc, bn in dirs:
+                    nx, ny = cx + dx, cy + dy
+                    if (
+                        0 <= nx < self.width
+                        and 0 <= ny < self.height
+                    ):
+                        if (nx, ny) not in visited:
+                            neighbors.append((nx, ny, bc, bn))
 
-            if neighbors:
-                nx, ny, bc, bn = random.choice(neighbors)
-                self.grid[cy][cx] &= ~bc
-                self.grid[ny][nx] &= ~bn
-                visited.add((nx, ny))
-                stack.append((nx, ny))
-            else:
-                stack.pop()
+                if neighbors:
+                    nx, ny, bc, bn = random.choice(neighbors)
+                    self.grid[cy][cx] &= ~bc
+                    self.grid[ny][nx] &= ~bn
+                    visited.add((nx, ny))
+                    stack.append((nx, ny))
+                else:
+                    stack.pop()
 
-        if not perfect:
-            self._make_imperfect(chance=0.08)
+            if not perfect:
+                self._make_imperfect(chance=0.08)
 
-        self.solution = self._solve_bfs(entry, exit_p)
+            self.solution = self._solve_bfs(entry, exit_p)
+
+            if not self.solution:
+                sys.stderr.write(
+                    "Error: No path found between ENTRY and EXIT.\n"
+                )
+                sys.exit(1)
+
+        except Exception as e:
+            sys.stderr.write(f"Error during maze generation: {e}\n")
+            sys.exit(1)
 
     def _solve_bfs(
         self,
         start: Tuple[int, int],
         end: Tuple[int, int]
     ) -> str:
-        """Find the shortest path using BFS to comply with requirements."""
+        """
+        Find the shortest path between two cells using BFS.
+
+        Args:
+            start (Tuple[int, int]): The starting cell (x, y).
+            end (Tuple[int, int]): The target cell (x, y).
+
+        Returns:
+            str: A string of directions (N, S, E, W) representing
+                the shortest path. Returns an empty string if no
+                path exists.
+        """
         queue: deque[Tuple[Tuple[int, int], str]] = deque([(start, "")])
-        visited: set[Tuple[int, int]] = {start}
+        visited: Set[Tuple[int, int]] = {start}
         moves: List[Tuple[int, int, str, int]] = [
             (0, -1, "N", 1),
             (1, 0, "E", 2),

@@ -35,5 +35,6 @@ clean:
 	rm -rf *.tar.gz *.whl
 	find . -type d \( -name "__pycache__" -o -name ".mypy_cache" \) \
 		-exec rm -rf {} + 2>/dev/null; true
+	rm -f maze.txt
 
 .PHONY: all install run debug lint lint-strict clean
