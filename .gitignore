@@ -10,8 +10,8 @@ __pycache__/
 build/
 dist/
 *.egg-info/
-*.whl
-*.tar.gz
+#*.whl
+#*.tar.gz
 
 # Ambientes Virtuais
 venv/
