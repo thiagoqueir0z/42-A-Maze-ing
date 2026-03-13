@@ -37,4 +37,13 @@ clean:
 		-exec rm -rf {} + 2>/dev/null; true
 	rm -f maze.txt
 
-.PHONY: all install run debug lint lint-strict clean
+venv-clean:
+	@echo "Removing common virtualenv directories..."
+	@rm -rf .venv venv env .env .venv_build .venv_test .venv_test_sdist || true
+	@echo "Searching for any directory containing pyvenv.cfg and removing it..."
+	@# Procura por pyvenv.cfg até uma profundidade razoável e remove o diretório pai
+	@find . -maxdepth 4 -type f -name "pyvenv.cfg" -print0 2>/dev/null \
+		| xargs -0 -I{} sh -c 'd="$$(dirname "{}")"; echo "rm -rf $$d"; rm -rf "$$d"' || true
+	@echo "Done."
+
+.PHONY: all install run debug lint lint-strict clean venv-clean

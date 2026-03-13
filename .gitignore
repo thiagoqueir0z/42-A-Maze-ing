@@ -26,4 +26,4 @@ thumbs.db
 maze.txt
 
 # Não ignorar este ficheiro específico.
-!mazegen_mariaalm-1.0.0-py3-none-any.whlm
+!mazegen-1.0.0-py3-none-any.whl

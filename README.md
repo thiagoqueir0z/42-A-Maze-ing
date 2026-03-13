@@ -228,6 +228,43 @@ pip install ./mazegen_mariaalm-1.0.0-py3-none-any.whl
 - **mariaalm** — Visual and graphical implementation (MiniLibX UI, rendering, colors, controls, and interactive visualization).
 - **thiferre** — Backend implementation (configuration parsing/validation, maze generation, solution finding, and export format).
 
+### Anticipated planning
+
+We started by splitting the project into two main tracks (backend and visual/UI) so we could progress in parallel:
+
+1. **Config & validation**  
+   Define the config format and implement strict parsing/validation (KEY=VALUE, mandatory keys, bounds checks).
+
+2. **Maze generation core**  
+   Implement Recursive Backtracker (DFS) for `PERFECT=true`, add reproducibility via `SEED`, and encode the maze as a bitwise grid (N/E/S/W).
+
+3. **Solving & export format**  
+   Implement BFS solving to produce the `N/E/S/W` solution string and export the grid as the required hexadecimal format plus metadata.
+
+4. **Visualization layer (MLX)**  
+   Build the MLX window loop, rendering pipeline, and interactive controls (regen, show/hide path, color changes).
+
+5. **Quality pass**  
+   Ensure flake8 formatting, type hints, and docstrings across the codebase, and validate edge cases.
+
+During implementation we iterated on the plan mainly due to constraint-driven changes:
+
+- **Open-area constraints**: the requirement to avoid large open areas (e.g., “never a fully open 3×3”) led to changes in generation logic and additional validation, requiring some refactoring of the generator.
+- **Architecture adjustments**: the visual layer evolved into a **mixin-based design** to keep responsibilities separated (animation, tile drawing, renderer primitives), which made the UI code cleaner and easier to maintain.
+- **Tooling and strictness**: integrating lint/type-checking revealed a few adjustments needed for third-party MLX wrapper code (excluded from lint/type-checking) and for mixin attribute typing.
+
+### What worked well
+
+- **Clear separation between backend and UI**: the backend stayed reusable and testable, while the MLX visualizer remained modular through mixins.
+- **Strict config parsing**: validating input early prevented subtle runtime errors and made debugging easier.
+- **Reproducibility**: `SEED` support made it easy to reproduce mazes and troubleshoot generation/visual bugs.
+
+### What could be improved
+
+- **More automated tests**: adding unit tests for generation constraints (e.g., “no 3×3 open areas”) and export formatting would increase confidence and reduce regressions.
+- **Stricter typing around mixins**: using `Protocol`/explicit attribute declarations consistently would reduce mypy friction and make intent clearer.
+- **Better error recovery**: in edge cases where constraints prevent valid carving, adding a controlled retry strategy (instead of failing) would improve robustness.
+
 ### Tools used
 
 - **GitHub** (version control and collaboration)
