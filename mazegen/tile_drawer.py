@@ -1,11 +1,11 @@
 from typing import Tuple
 
 
-class TileDrawerMixin:
+class TileDrawer:
     """
     Provide methods for drawing specific maze components onto the screen.
 
-    This mixin handles the logic for rendering various tile types including
+    This component handles the logic for rendering various tile types including
     walls, floors, paths, and start/end markers, often using neighboring
     cell states to determine connective drawing logic.
     """

@@ -3,11 +3,11 @@ import time
 from typing import Any, Dict, Iterable, Tuple
 
 
-class AnimatorMixin:
+class Animator:
     """
     Manages path reveal animation and UI pulse effects.
 
-    This mixin provides the timing logic and coordinate mapping necessary
+    This component provides the timing logic and coordinate mapping necessary
     to animate the solution path cell-by-cell and create pulsing visual
     effects for special maze elements.
     """
@@ -20,7 +20,7 @@ class AnimatorMixin:
         Map solution path coordinates to their sequence index for animation.
 
         Args:
-            path_coords: An iterable of (x, y) coordinates representing 
+            path_coords: An iterable of (x, y) coordinates representing
                 the solution path in the visual matrix.
         """
         self.path_reveal_map: Dict[Tuple[int, int], int] = {}
@@ -47,7 +47,7 @@ class AnimatorMixin:
             y: The vertical grid coordinate.
 
         Returns:
-            True if the cell is within the revealed range or not part of the 
+            True if the cell is within the revealed range or not part of the
             animated path, False otherwise.
         """
         if not self.path_animation_enabled:
@@ -90,8 +90,8 @@ class AnimatorMixin:
         """
         Handle per-frame animation updates and timing.
 
-        Updates the UI pulse phase and increments the path reveal index if 
-        the specified intervals have passed. Triggers a redraw if any state 
+        Updates the UI pulse phase and increments the path reveal index if
+        the specified intervals have passed. Triggers a redraw if any state
         changes.
 
         Args:

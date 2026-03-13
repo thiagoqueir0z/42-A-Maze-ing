@@ -1,11 +1,11 @@
 import random
 
 
-class RendererMixin:
+class Renderer:
     """
     Provide low-level pixel manipulation and color calculation methods.
 
-    This mixin handles direct memory writing for rectangle drawing, tile
+    This component handles direct memory writing for rectangle drawing, tile
     rendering, and color transformations used by the visualizer.
     """
 

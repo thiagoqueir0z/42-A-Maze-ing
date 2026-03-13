@@ -1,15 +1,15 @@
 import os
 from typing import Any, Callable, Dict, Mapping, Optional, Tuple, cast
 
-from mazegen.animator import AnimatorMixin
+from mazegen.animator import Animator
 from mazegen.generator import MazeGenerator
 from mazegen.maze_data import MazeData
 from mazegen.mlx import Mlx
-from mazegen.renderer import RendererMixin
-from mazegen.tile_drawer import TileDrawerMixin
+from mazegen.renderer import Renderer
+from mazegen.tile_drawer import TileDrawer
 
 
-class MazeVisualizer(RendererMixin, TileDrawerMixin, AnimatorMixin):
+class MazeVisualizer(Renderer, TileDrawer, Animator):
     """
     Handle the graphical representation and user interaction of the maze.
 

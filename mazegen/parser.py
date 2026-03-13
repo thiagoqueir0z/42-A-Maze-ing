@@ -144,7 +144,7 @@ def validate_config(raw_data: dict[str, Any]) -> dict[str, Any]:
             if valid_config['TILE_SIZE'] <= 0:
                 raise ValueError("TILE_SIZE must be greater than zero.")
         else:
-            valid_config['TILE_SIZE'] = 32
+            valid_config['TILE_SIZE'] = 12
 
         # Bounds checks
         ex_ent, ey_ent = valid_config['ENTRY']
